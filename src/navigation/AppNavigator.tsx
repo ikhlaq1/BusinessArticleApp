@@ -5,7 +5,7 @@ import { Business } from '../types';
 
 // Import screens
 import BusinessListScreen from '../screens/BusinessListScreen/BusinessListScreen';
-// import ArticleListScreen from '../screens/ArticleListScreen';
+import ArticleListScreen from '../screens/ArticleListScreen/ArticleListScreen';
 
 // Define navigation param types
 export type RootStackParamList = {
@@ -40,14 +40,14 @@ function AppNavigator() {
             headerLeft: () => null, // Remove back button on main screen
           }}
         />
-        {/* <Stack.Screen
+        <Stack.Screen
           name="ArticleList"
           component={ArticleListScreen}
           options={({ route }) => ({
             title: route.params.business.name,
             headerSubtitle: 'Articles',
           })}
-        /> */}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

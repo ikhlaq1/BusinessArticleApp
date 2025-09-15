@@ -76,6 +76,7 @@ export default function BusinessListScreen() {
   };
 
   const handleBusinessPress = (business: Business) => {
+    console.log('🚀 ~ handleBusinessPress ~ business:', business);
     navigation.navigate('ArticleList', { business });
   };
 
