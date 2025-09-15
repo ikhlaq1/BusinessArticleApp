@@ -1,6 +1,19 @@
-import 'react-native-get-random-values';
 import { createRxDatabase, RxDatabase, RxCollection } from 'rxdb';
-import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+import { createSQLiteAdapter } from './sqlite-adapter';
+
+// Add dev-mode plugin for better error messages in development
+import { addRxPlugin } from 'rxdb';
+import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
+import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
+import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
+
+// Enable dev mode in development
+if (__DEV__) {
+  addRxPlugin(RxDBDevModePlugin);
+}
+
+// Add required plugins
+addRxPlugin(RxDBQueryBuilderPlugin);
 
 // Import schemas
 import {
@@ -15,6 +28,8 @@ import {
 } from './schemas/article.schema';
 import { Business, Article } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { clearSQLiteDatabase, getSQLiteDatabaseInfo } from './sqlite-adapter';
+import QuickCrypto from 'react-native-quick-crypto';
 
 // Database type
 export type MyDatabase = RxDatabase<{
@@ -23,6 +38,13 @@ export type MyDatabase = RxDatabase<{
 }>;
 
 let dbInstance: MyDatabase | null = null;
+
+// Custom hash function for React Native
+const customHashFunction = async (data: string): Promise<string> => {
+  const hash = QuickCrypto.createHash('sha256');
+  hash.update(data);
+  return hash.digest('hex');
+};
 
 // Database initialization function
 export const initDatabase = async (): Promise<MyDatabase> => {
@@ -36,12 +58,17 @@ export const initDatabase = async (): Promise<MyDatabase> => {
   try {
     console.log('Creating database...');
 
-    // Create the database with memory storage
+    // Create the database with SQLite storage wrapped with validation
+    const storage = wrappedValidateAjvStorage({
+      storage: createSQLiteAdapter(),
+    });
+
     const db = await createRxDatabase<MyDatabase>({
       name: 'businessarticledb',
-      storage: getRxStorageMemory(),
+      storage,
       multiInstance: false,
       ignoreDuplicate: true,
+      hashFunction: customHashFunction,
     });
 
     console.log('Database created, adding collections...');
@@ -109,7 +136,7 @@ export const getDatabase = async (): Promise<MyDatabase> => {
 // Close database
 export const closeDatabase = async (): Promise<void> => {
   if (dbInstance) {
-    await dbInstance.destroy();
+    await dbInstance.remove();
     dbInstance = null;
   }
 };
@@ -209,6 +236,33 @@ export const DatabaseService = {
       return articles.map(a => a.toJSON());
     } catch (error) {
       console.error('Error getting articles:', error);
+      throw error;
+    }
+  },
+
+  // Database management operations
+  async clearDatabase(): Promise<void> {
+    try {
+      await clearSQLiteDatabase();
+      // Reset the database instance to force re-initialization
+      if (dbInstance) {
+        await dbInstance.remove();
+        dbInstance = null;
+      }
+      console.log('Database cleared successfully');
+    } catch (error) {
+      console.error('Error clearing database:', error);
+      throw error;
+    }
+  },
+
+  async getDatabaseInfo(): Promise<{ [key: string]: number }> {
+    try {
+      const info = await getSQLiteDatabaseInfo();
+      console.log('Database info:', info);
+      return info;
+    } catch (error) {
+      console.error('Error getting database info:', error);
       throw error;
     }
   },
