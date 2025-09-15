@@ -1,4 +1,5 @@
-import { createRxDatabase, RxDatabase, RxCollection, addRxPlugin } from 'rxdb';
+import 'react-native-get-random-values';
+import { createRxDatabase, RxDatabase, RxCollection } from 'rxdb';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 
 // Import schemas
