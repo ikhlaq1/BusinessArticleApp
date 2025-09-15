@@ -9,7 +9,7 @@ import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import React, { useEffect } from 'react';
 import { initDatabase } from './src/database';
-import BusinessListScreen from './src/screens/BusinessListScreen/BusinessListScreen';
+import AppNavigator from './src/navigation/AppNavigator';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -34,7 +34,7 @@ function App() {
     <SafeAreaProvider style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <BusinessListScreen />
+      <AppNavigator />
     </SafeAreaProvider>
   );
 }

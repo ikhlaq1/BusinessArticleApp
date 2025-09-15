@@ -4,25 +4,32 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
   RefreshControl,
   Alert,
   TextInput,
   Modal,
   SafeAreaView,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { DatabaseService } from '../../database';
 import { Business } from '../../types';
+import { RootStackParamList } from '../../navigation/AppNavigator';
 import { styles } from './styles';
 
+type BusinessListNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'BusinessList'
+>;
+
 export default function BusinessListScreen() {
+  const navigation = useNavigation<BusinessListNavigationProp>();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [newBusinessName, setNewBusinessName] = useState('');
 
-  // Load businesses on mount
   useEffect(() => {
     loadBusinesses();
   }, []);
@@ -57,11 +64,8 @@ export default function BusinessListScreen() {
       console.log('Creating business:', newBusinessName);
       await DatabaseService.createBusiness(newBusinessName.trim());
 
-      // Reset form and close modal
       setNewBusinessName('');
       setModalVisible(false);
-
-      // Reload list
       await loadBusinesses();
 
       Alert.alert('Success', 'Business created successfully');
@@ -71,13 +75,21 @@ export default function BusinessListScreen() {
     }
   };
 
+  const handleBusinessPress = (business: Business) => {
+    navigation.navigate('ArticleList', { business });
+  };
+
   const renderBusinessItem = ({ item }: { item: Business }) => (
-    <TouchableOpacity style={styles.businessCard}>
+    <TouchableOpacity
+      style={styles.businessCard}
+      onPress={() => handleBusinessPress(item)}
+    >
       <Text style={styles.businessName}>{item.name}</Text>
       <Text style={styles.businessId}>ID: {item.id}</Text>
       <Text style={styles.businessDate}>
         Created: {new Date(item.createdAt).toLocaleDateString()}
       </Text>
+      <Text style={styles.tapHint}>Tap to view articles →</Text>
     </TouchableOpacity>
   );
 
@@ -90,16 +102,6 @@ export default function BusinessListScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Businesses</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
-
       <FlatList
         data={businesses}
         keyExtractor={item => item.id}
@@ -110,6 +112,13 @@ export default function BusinessListScreen() {
         }
         ListEmptyComponent={renderEmptyList}
       />
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
 
       {/* Create Business Modal */}
       <Modal
