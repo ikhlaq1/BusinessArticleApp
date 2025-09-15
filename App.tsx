@@ -10,6 +10,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import React, { useEffect } from 'react';
 import { initDatabase } from './src/database';
 import AppNavigator from './src/navigation/AppNavigator';
+import OfflineIndicator from './src/components/OfflineIndicator';
+import SyncStatus from './src/components/SyncStatus';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -35,6 +37,8 @@ function App() {
       <StatusBar barStyle="dark-content" />
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <AppNavigator />
+      <OfflineIndicator />
+      <SyncStatus />
     </SafeAreaProvider>
   );
 }
