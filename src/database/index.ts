@@ -5,12 +5,12 @@ import { createSQLiteAdapter } from './sqlite-adapter';
 import { addRxPlugin } from 'rxdb';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
+import { replicateCouchDB } from 'rxdb/plugins/replication-couchdb';
+import { RxReplicationState } from 'rxdb/plugins/replication';
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
-
+import { couchDBSync } from '../services/couchdbSync';
 // Enable dev mode in development
-if (__DEV__) {
-  addRxPlugin(RxDBDevModePlugin);
-}
+addRxPlugin(RxDBDevModePlugin);
 
 // Add required plugins
 addRxPlugin(RxDBQueryBuilderPlugin);
@@ -124,7 +124,15 @@ export const initDatabase = async (): Promise<MyDatabase> => {
     throw error;
   }
 };
-
+export const startCouchDBSync = async () => {
+  return await couchDBSync.startSync();
+};
+export const stopCouchDBSync = async () => {
+  return await couchDBSync.stopSync();
+};
+export const deleteCouchDBSync = async () => {
+  return await couchDBSync.deleteSync();
+};
 // Get database instance
 export const getDatabase = async (): Promise<MyDatabase> => {
   if (!dbInstance) {
