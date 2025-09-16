@@ -1,8 +1,4 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
-
 # Getting Started
-
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
 ## Step 1: Start Metro
 
@@ -32,66 +28,103 @@ npm run android
 yarn android
 ```
 
-### iOS
+### Demo
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+You can view a demo of the app [here](https://drive.google.com/file/d/1TsKwbx9VeLH8AGIbpPkB5WC4xFzOU_Ng/view?usp=sharing).
+Download APK here  [here](https://drive.google.com/file/d/1BmCdMq3lPO9ZOInNV7Ulpar5GCpbAw5L/view?usp=sharing).
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+---
 
-```sh
-bundle install
+## Architecture Decisions
+
+- **Offline-first**: All reads/writes hit local RxDB first, guaranteeing instant UX and resilience to connectivity loss.
+- **SQLite storage**: On mobile, SQLite is the most reliable local persistence layer. We implemented a custom adapter around `react-native-quick-sqlite` to satisfy RxDB’s `SQLiteBasics` interface.
+- **Live replication**: Two collections (`businesses`, `articles`) replicate to CouchDB using RxDB’s `replicateCouchDB`, with separate `replicationIdentifier`s.
+- **Network-aware lifecycle**: A hook (`useCouchDBSync`) starts replication when online and cancels it when offline.
+- **UI observability**: A `SyncStatus` component exposes a simple status line to the user.
+
+---
+
+### Technology Stack
+
+- **React Native** (TypeScript) - Mobile framework
+- **RxDB** - Reactive database for offline-first functionality
+- **SQLite** - Local storage engine via react-native-quick-sqlite
+- **CouchDB** - Cloud database for synchronization
+- **React Navigation** - Screen navigation
+- **NetInfo** - Network state detection
+
+---
+
+### Data Flow
+
+  1. User creates/reads data → RxDB (local SQLite)
+  2. RxDB detects network status via NetInfo
+  3. When online → RxDB syncs with CouchDB
+  4. When offline → Data stays in local SQLite
+  5. On reconnection → Automatic sync resumes
+
+## Implementation Details
+
+### 1) Custom SQLite adapter for RxDB (i don't have premium rxdb)
+
+File: `src/database/sqlite-adapter.ts`
+
+Key points:
+
+- Uses `react-native-quick-sqlite` for fast, native SQLite.
+- Implements RxDB `SQLiteBasics` (`open`, `close`, `run`, `all`, `setPragma`, `journalMode`).
+- Caches connections per database name to avoid repeated opens.
+- Converts query results to RxDB’s expected `{ id, data }` shape when needed.
+- Exposes helpers: `clearSQLiteDatabase()` and `getSQLiteDatabaseInfo()`.
+
+### 2) Database initialization and schemas
+
+File: `src/database/index.ts`
+
+- Wraps the SQLite storage with AJV validation via `wrappedValidateAjvStorage`.
+- Creates database `businessarticledb`, adds collections, and exposes `getDatabase()`.
+- Exports `startCouchDBSync()` and `stopCouchDBSync()` which delegate to the sync service.
+
+Schemas:
+
+- `src/database/schemas/business.schema.ts`
+- `src/database/schemas/article.schema.ts`
+
+### 3) CouchDB replication service
+
+File: `src/services/couchdbSync.ts`
+
+- Uses `replicateCouchDB` with `replicationIdentifier`, `live: true`, and the collection + remote URL.
+- Auth via `getFetchWithCouchDBAuthorization(username, password)`.
+- Subscribes to `error$` streams for visibility.
+
+### 4) Network-aware sync lifecycle
+
+File: `src/hooks/useCouchDBSync.ts`
+
+- Listens to `@react-native-community/netinfo`.
+- When online: starts sync and sets status `syncing` → `synced`.
+- When offline: cancels sync and sets status `offline`.
+
+### 5) UI visibility
+
+File: `src/components/SyncStatus.tsx`
+
+- Maps status to icon + message: `syncing`, `synced`, `offline`, `error`, `idle`.
+
+---
+
+# Deploying CouchDB on Railway
+
+I used Railway’s CouchDB template to deploy a managed CouchDB instance.
+
+- Template: [CouchDB on Railway](https://railway.com/new/template/eRC98l)
+- After deployment, we noted the public base URL and created two databases.
+
+Create databases via `curl`:
+
+```bash
+curl -X PUT https://admin:5NuomdtPJVnE@database-production-9f7e.up.railway.app/businesses
+curl -X PUT https://admin:5NuomdtPJVnE@database-production-9f7e.up.railway.app/articles
 ```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
