@@ -10,9 +10,7 @@ import { RxReplicationState } from 'rxdb/plugins/replication';
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { couchDBSync } from '../services/couchdbSync';
 // Enable dev mode in development
-if (__DEV__) {
-  addRxPlugin(RxDBDevModePlugin);
-}
+addRxPlugin(RxDBDevModePlugin);
 
 // Add required plugins
 addRxPlugin(RxDBQueryBuilderPlugin);
@@ -131,6 +129,9 @@ export const startCouchDBSync = async () => {
 };
 export const stopCouchDBSync = async () => {
   return await couchDBSync.stopSync();
+};
+export const deleteCouchDBSync = async () => {
+  return await couchDBSync.deleteSync();
 };
 // Get database instance
 export const getDatabase = async (): Promise<MyDatabase> => {

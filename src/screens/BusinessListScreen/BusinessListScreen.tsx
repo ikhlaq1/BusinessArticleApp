@@ -9,10 +9,15 @@ import {
   TextInput,
   Modal,
   SafeAreaView,
+  Button,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { DatabaseService } from '../../database';
+import {
+  DatabaseService,
+  deleteCouchDBSync,
+  startCouchDBSync,
+} from '../../database';
 import { Business } from '../../types';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { styles } from './styles';
@@ -75,8 +80,7 @@ export default function BusinessListScreen() {
     }
   };
 
-  const handleBusinessPress = (business: Business) => {
-    console.log('🚀 ~ handleBusinessPress ~ business:', business);
+  const handleBusinessPress = async (business: Business) => {
     navigation.navigate('ArticleList', { business });
   };
 
@@ -103,6 +107,9 @@ export default function BusinessListScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* <TouchableOpacity onPress={() => deleteCouchDBSync()}>
+        <Text>Delete Local and Remote Data</Text>
+      </TouchableOpacity> */}
       <FlatList
         data={businesses}
         keyExtractor={item => item.id}
