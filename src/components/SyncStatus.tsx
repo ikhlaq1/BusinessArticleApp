@@ -1,67 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
+import React from 'react';
+import { View, Text, ActivityIndicator } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 
 interface SyncStatusProps {
+  status: 'idle' | 'syncing' | 'synced' | 'offline' | 'error';
   style?: any;
 }
 
-export default function SyncStatus({ style }: SyncStatusProps) {
-  const [isOnline, setIsOnline] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      setIsOnline((state.isConnected && state.isInternetReachable) || false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
+export default function SyncStatus({ status, style }: SyncStatusProps) {
   const getStatusText = () => {
-    if (!isOnline) {
-      return 'Offline - Changes saved locally';
+    switch (status) {
+      case 'syncing':
+        return 'Syncing with CouchDB...';
+      case 'synced':
+        return 'All changes synced';
+      case 'offline':
+        return 'Offline - Changes saved locally';
+      case 'error':
+        return 'Sync error - Will retry';
+      case 'idle':
+      default:
+        return 'Initializing sync...';
     }
-    if (isSyncing) {
-      return 'Syncing...';
-    }
-    if (lastSyncTime) {
-      const minutes = Math.floor((Date.now() - lastSyncTime.getTime()) / 60000);
-      if (minutes < 1) return 'Synced just now';
-      if (minutes === 1) return 'Synced 1 minute ago';
-      return `Synced ${minutes} minutes ago`;
-    }
-    return 'Ready to sync';
   };
 
   const getStatusColor = () => {
-    if (!isOnline) return '#ff9800';
-    if (isSyncing) return '#2196F3';
-    return '#4CAF50';
+    switch (status) {
+      case 'syncing':
+        return '#FFA500';
+      case 'synced':
+        return '#4CAF50';
+      case 'offline':
+        return '#9E9E9E';
+      case 'error':
+        return '#F44336';
+      case 'idle':
+      default:
+        return '#2196F3';
+    }
+  };
+
+  const renderIcon = () => {
+    switch (status) {
+      case 'syncing':
+        return <ActivityIndicator size="small" color="#FFA500" />;
+      case 'synced':
+        return <Icon name="cloud-done" size={20} color="#4CAF50" />;
+      case 'offline':
+        return <Icon name="cloud-off" size={20} color="#9E9E9E" />;
+      case 'error':
+        return <Icon name="error-outline" size={20} color="#F44336" />;
+      default:
+        return <Icon name="cloud-queue" size={20} color="#2196F3" />;
+    }
   };
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.statusRow}>
-        <View
-          style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
-        />
-        <Text style={styles.statusText}>{getStatusText()}</Text>
-        {isSyncing && (
-          <ActivityIndicator
-            size="small"
-            color="#2196F3"
-            style={styles.spinner}
-          />
-        )}
+        {renderIcon()}
+        <Text
+          style={[
+            styles.statusText,
+            { color: getStatusColor(), marginLeft: 8 },
+          ]}
+        >
+          {getStatusText()}
+        </Text>
       </View>
     </View>
   );

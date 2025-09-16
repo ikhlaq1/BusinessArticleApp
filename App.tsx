@@ -12,10 +12,11 @@ import { initDatabase } from './src/database';
 import AppNavigator from './src/navigation/AppNavigator';
 import OfflineIndicator from './src/components/OfflineIndicator';
 import SyncStatus from './src/components/SyncStatus';
+import { useCouchDBSync } from './src/hooks/useCouchDBSync';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
-
+  const syncStatus = useCouchDBSync();
   useEffect(() => {
     initializeDatabase();
   }, []);
@@ -34,11 +35,10 @@ function App() {
 
   return (
     <SafeAreaProvider style={styles.container}>
-      <StatusBar barStyle="dark-content" />
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <AppNavigator />
       <OfflineIndicator />
-      <SyncStatus />
+      <SyncStatus status={syncStatus} />
     </SafeAreaProvider>
   );
 }
