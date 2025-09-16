@@ -30,22 +30,22 @@ export class CouchDBSyncService {
 
       // Setup business collection replication
       this.businessReplication = await replicateCouchDB({
+        replicationIdentifier: 'businesses-sync',
         collection: db.businesses,
         url: `https://database-production-9f7e.up.railway.app/businesses/`,
         fetch: fetchWithAuth, // Use the authorized fetch
         live: true,
-        retry: true,
         pull: {},
         push: {},
       });
 
       // Setup article collection replication
       this.articleReplication = await replicateCouchDB({
+        replicationIdentifier: 'articles-sync',
         collection: db.articles,
         url: `https://database-production-9f7e.up.railway.app/articles/`,
         fetch: fetchWithAuth, // Use the authorized fetch
         live: true,
-        retry: true,
         pull: {},
         push: {},
       });
